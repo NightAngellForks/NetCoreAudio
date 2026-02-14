@@ -23,6 +23,9 @@ namespace NetCoreAudio.Players
         {
             FileUtil.ClearTempFiles();
             _fileName = $"\"{FileUtil.CheckFileToPlay(fileName)}\"";
+#if DEBUG
+            Debug.WriteLine($"Actual file passed to MCI: {_fileName}");
+#endif
             _playbackTimer = new Timer
             {
                 AutoReset = false
