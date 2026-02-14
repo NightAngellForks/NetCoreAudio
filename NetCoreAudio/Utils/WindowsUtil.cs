@@ -8,6 +8,12 @@ namespace NetCoreAudio.Utils
 {
     internal static class WindowsUtil
     {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern uint GetShortPathName(
+            [MarshalAs(UnmanagedType.LPTStr)] string path,
+            [MarshalAs(UnmanagedType.LPTStr)] StringBuilder shortPath,
+            uint shortPathLength);
+
         [DllImport("winmm.dll")]
         private static extern int mciSendString(
             string command,
@@ -72,6 +78,29 @@ namespace NetCoreAudio.Utils
             waveOutSetVolume(IntPtr.Zero, newVolumeAllChannels);
 
             return Task.CompletedTask;
+        }
+
+        internal static bool TryGetShortPath(string path, out string shortPath)
+        {
+            shortPath = string.Empty;
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return false;
+
+            var initialLength = 260u;
+            var buffer = new StringBuilder((int)initialLength);
+            var result = GetShortPathName(path, buffer, initialLength);
+            if (result > initialLength)
+            {
+                buffer = new StringBuilder((int)result);
+                result = GetShortPathName(path, buffer, result);
+            }
+
+            if (result == 0)
+                return false;
+
+            shortPath = buffer.ToString();
+            return !string.IsNullOrWhiteSpace(shortPath);
         }
     }
 
